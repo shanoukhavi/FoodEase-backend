@@ -1,24 +1,32 @@
-import express,{Request,Response} from "express";
+import express, { Request, Response } from "express";
 import cors from "cors";
 import "dotenv/config";
 import mongoose from "mongoose";
-import myUserRoute from "./routes/MyUserRoute"
-// flow is like index to route from route to controller 
+import myUserRoute from "./routes/MyUserRoute";
+import { v2 as cloudinary } from "cloudinary";
+import myRestaurantRoute from './routes/MyRestaurantRoute';
+// import { validateMyRestaurantRequest } from "./middleware/validation";
 
-mongoose.connect(process.env.MONGODB_CONNECTION_STRING as string).then(()=>console.log("connected to databse"));
-const app= express();
+// console.log("validateMyRestaurantRequest in index.ts:", validateMyRestaurantRequest);
+
+mongoose.connect(process.env.MONGODB_CONNECTION_STRING as string).then(() => console.log("connected to database"));
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const app = express();
 app.use(express.json());
 app.use(cors());
-app.get("/health",async(req:Request,res:Response) =>{
-    res.send({message:"Health ok!"});
-})
-//api for the user ur creating 
-app.use("/api/my/user",myUserRoute);
+app.get("/health", async (req: Request, res: Response) => {
+  res.send({ message: "Health ok!" });
+});
 
+// API for the user you're creating 
+app.use("/api/my/user", myUserRoute);
+app.use("/api/my/restaurant", myRestaurantRoute);
 
-// app.get("/test",async (req:Request, res:Response) =>{
-// res.json({message:"Hello world!"});
-// });
-app.listen(7000,()=>{
-    console.log("Server is running on port 7000");
- });
+app.listen(7000, () => {
+  console.log("Server is running on port 7000");
+});
