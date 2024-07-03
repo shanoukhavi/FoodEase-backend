@@ -4,6 +4,23 @@ import Restaurant from "../models/restaurant";
 import cloudinary from "cloudinary";
 import mongoose from "mongoose";
 
+const getMyRestaurant=async(req:Request, res:Response)=>{
+  try{
+const restaurant=await Restaurant.findOne({user:req.userId});
+//only user can adda one ly one restauarant so we use tthis fn mate 
+if(!restaurant){
+  return res.status(404).json({message:"Restaurant not found"});
+ 
+}
+
+res.json(restaurant);
+  }catch(error){
+    console.log("error",error);
+    res.status(500).json({message:"Error Fetching restaurant"});
+    
+  }
+}
+
 const createMyRestaurant = async (req: Request, res: Response) => {
   try {
     const existingRestaurant = await Restaurant.findOne({ user: req.userId });
@@ -34,4 +51,5 @@ console.log("MyRestaurantController.createMyRestaurant:", createMyRestaurant);
 
 export default {
   createMyRestaurant,
+  getMyRestaurant
 };

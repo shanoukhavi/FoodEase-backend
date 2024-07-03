@@ -30,9 +30,9 @@ const validateMyRestaurantRequest = [
   handleValidationErrors,
 ];
 
-console.log("validateMyRestaurantRequest in validation.ts:", validateMyRestaurantRequest);
+// console.log("validateMyRestaurantRequest in validation.ts:", validateMyRestaurantRequest);
 
 export {
   validateMyUserRequest,
-  validateMyRestaurantRequest
+  // validateMyRestaurantRequest
 };

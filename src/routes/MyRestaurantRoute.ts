@@ -14,7 +14,9 @@ const upload = multer({
   }
 });
 
-// console.log("validateMyRestaurantRequest (import):", validateMyRestaurantRequest);
+// console.log("validateMyRestaurantRequest (import):", validateMyRestaurantRequest); GET /a[/my/resatuatrna t]
+router.get("/",jwtCheck,jwtParse,MyRestaurantController.getMyRestaurant);
+
 
 router.post(
   "/",
