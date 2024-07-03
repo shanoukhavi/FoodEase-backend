@@ -1,25 +1,22 @@
-
 import { Request, Response } from "express";
 import Restaurant from "../models/restaurant";
 import cloudinary from "cloudinary";
 import mongoose from "mongoose";
 
-const getMyRestaurant=async(req:Request, res:Response)=>{
-  try{
-const restaurant=await Restaurant.findOne({user:req.userId});
-//only user can adda one ly one restauarant so we use tthis fn mate 
-if(!restaurant){
-  return res.status(404).json({message:"Restaurant not found"});
- 
-}
+const getMyRestaurant = async (req: Request, res: Response) => {
+  try {
+    const restaurant = await Restaurant.findOne({ user: req.userId });
 
-res.json(restaurant);
-  }catch(error){
-    console.log("error",error);
-    res.status(500).json({message:"Error Fetching restaurant"});
-    
+    if (!restaurant) {
+      return res.status(404).json({ message: "Restaurant not found" });
+    }
+
+    res.json(restaurant);
+  } catch (error) {
+    console.log("error", error);
+    res.status(500).json({ message: "Error Fetching restaurant" });
   }
-}
+};
 
 const createMyRestaurant = async (req: Request, res: Response) => {
   try {
@@ -29,13 +26,10 @@ const createMyRestaurant = async (req: Request, res: Response) => {
       return res.status(409).json({ message: "User restaurant already exists" });
     }
 
-    const image = req.file as Express.Multer.File;
-    const base64Image = Buffer.from(image.buffer).toString("base64");
-    const dataURI = `data:${image.mimetype};base64,${base64Image}`;
-    const uploadResponse = await cloudinary.v2.uploader.upload(dataURI);
+    const imageUrl = await uploadImage(req.file as Express.Multer.File);
 
     const restaurant = new Restaurant(req.body);
-    restaurant.imageUrl = uploadResponse.url;
+    restaurant.imageUrl = imageUrl;
     restaurant.user = new mongoose.Types.ObjectId(req.userId);
     restaurant.lastUpdate = new Date();
 
@@ -47,9 +41,46 @@ const createMyRestaurant = async (req: Request, res: Response) => {
   }
 };
 
-console.log("MyRestaurantController.createMyRestaurant:", createMyRestaurant);
+const updateMyRestaurant = async (req: Request, res: Response) => {
+  try {
+    const restaurant = await Restaurant.findOne({ user: req.userId });
+
+    if (!restaurant) {
+      return res.status(404).json({ message: "Restaurant not found" });
+    }
+
+    restaurant.restaurantName = req.body.restaurantName;
+    restaurant.city = req.body.city;
+    restaurant.country = req.body.country;
+    restaurant.deliveryPrice = req.body.deliveryPrice;
+    restaurant.estimateDeliveryTime = req.body.estimateDeliveryTime;
+    restaurant.cuisines = req.body.cuisines;
+    restaurant.menuItems = req.body.menuItems;
+    restaurant.lastUpdate = new Date();
+
+    if (req.file) {
+      const imageUrl = await uploadImage(req.file as Express.Multer.File);
+      restaurant.imageUrl = imageUrl;
+    }
+
+    await restaurant.save();
+    res.status(200).send(restaurant);
+  } catch (error) {
+    console.log("error", error);
+    res.status(500).json({ message: "Error updating restaurant" });
+  }
+};
+
+const uploadImage = async (file: Express.Multer.File) => {
+  const image = file;
+  const base64Image = Buffer.from(image.buffer).toString("base64");
+  const dataURI = `data:${image.mimetype};base64,${base64Image}`;
+  const uploadResponse = await cloudinary.v2.uploader.upload(dataURI);
+  return uploadResponse.url;
+};
 
 export default {
   createMyRestaurant,
-  getMyRestaurant
+  getMyRestaurant,
+  updateMyRestaurant, // Ensure this method is exported
 };

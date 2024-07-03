@@ -2,7 +2,6 @@ import express from "express";
 import multer from "multer";
 import MyRestaurantController from "../controllers/MyRestaurantController";
 import { jwtCheck, jwtParse } from "../middleware/auth";
-// import { validateMyRestaurantRequest } from "../middleware/validation";  // Temporarily comment out this line
 
 const router = express.Router();
 
@@ -14,19 +13,22 @@ const upload = multer({
   }
 });
 
-// console.log("validateMyRestaurantRequest (import):", validateMyRestaurantRequest); GET /a[/my/resatuatrna t]
-router.get("/",jwtCheck,jwtParse,MyRestaurantController.getMyRestaurant);
-
+router.get("/", jwtCheck, jwtParse, MyRestaurantController.getMyRestaurant);
 
 router.post(
   "/",
-  //  validateMyRestaurantRequest,  // Temporarily comment out this line
   jwtCheck,
   jwtParse,
   upload.single("imageFile"),
   MyRestaurantController.createMyRestaurant
 );
 
+router.put(
+  "/",
+  jwtCheck,
+  jwtParse,
+  upload.single("imageFile"),
+  MyRestaurantController.updateMyRestaurant // Use the correct method
+);
+
 export default router;
-
-
