@@ -5,11 +5,11 @@ import mongoose from "mongoose";
 import myUserRoute from "./routes/MyUserRoute";
 import { v2 as cloudinary } from "cloudinary";
 import myRestaurantRoute from './routes/MyRestaurantRoute';
-// import { validateMyRestaurantRequest } from "./middleware/validation";
+import restaurantRoute from './routes/RestaurantRoute';
 
-// console.log("validateMyRestaurantRequest in index.ts:", validateMyRestaurantRequest);
+mongoose.connect(process.env.MONGODB_CONNECTION_STRING as string)
+  .then(() => console.log("connected to database"));
 
-mongoose.connect(process.env.MONGODB_CONNECTION_STRING as string).then(() => console.log("connected to database"));
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -23,9 +23,9 @@ app.get("/health", async (req: Request, res: Response) => {
   res.send({ message: "Health ok!" });
 });
 
-// API for the user you're creating 
 app.use("/api/my/user", myUserRoute);
 app.use("/api/my/restaurant", myRestaurantRoute);
+app.use("/api/restaurant", restaurantRoute);
 
 app.listen(7000, () => {
   console.log("Server is running on port 7000");
