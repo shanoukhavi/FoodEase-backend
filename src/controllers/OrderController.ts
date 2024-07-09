@@ -5,6 +5,7 @@ import Order from "../models/order";
 
 const STRIPE = new Stripe(process.env.STRIPE_API_KEY as string);
 const FRONTEND_URL = process.env.FRONTEND_URL as string;
+const STRIPE_ENDPOINT_SECRET = process.env.STRIPE_WEB_ENDPOINT_SECRET as string;
 
 type CheckoutSessionRequest = {
   cartItems: {
@@ -20,14 +21,32 @@ type CheckoutSessionRequest = {
   };
   restaurantId: string;
 };
-const stripeWebhookHandler=async(req:Request, res:Response)=>{
-  //it is webhook mate 
-  console.log("RECIEVED EVENT");
-  console.log("==================");
-  console.log("event:",req.body);
-  res.send();
-  
-  
+
+const stripeWebhookHandler = async (req: Request, res: Response) => {
+  let event;
+
+  try {
+    const sig = req.headers["stripe-signature"];
+    event = STRIPE.webhooks.constructEvent(req.body, sig as string, STRIPE_ENDPOINT_SECRET);
+  } catch (error: any) {
+    console.log(`Webhook error: ${error.message}`);
+    return res.status(400).send(`Webhook error: ${error.message}`);
+  }
+
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as Stripe.Checkout.Session;
+    const order = await Order.findById(session.metadata?.orderId);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    order.totalAmount = session.amount_total;
+    order.status = "paid";
+    await order.save();
+  }
+
+  res.status(200).send();
 }
 
 const createCheckoutSession = async (req: Request, res: Response) => {
@@ -38,14 +57,13 @@ const createCheckoutSession = async (req: Request, res: Response) => {
       throw new Error("Restaurant not found");
     }
 
-    // Create the order in your database
     const newOrder = new Order({
       restaurant: restaurant._id,
       user: req.userId,
       status: "placed",
       deliveryDetails: checkoutSessionRequest.deliveryDetails,
       cartItems: checkoutSessionRequest.cartItems.map((item) => ({
-        menuItem: item.menuItem, // Make sure to use the correct field name
+        menuItem: item.menuItem,
         quantity: item.quantity,
         name: item.name,
       })),
@@ -61,7 +79,6 @@ const createCheckoutSession = async (req: Request, res: Response) => {
 
     await newOrder.save();
     res.json({ url: session.url });
-
   } catch (error: any) {
     console.error(error);
     res.status(500).json({ message: "Error creating checkout session" });
@@ -108,6 +125,5 @@ const createSession = async (lineItems: Stripe.Checkout.SessionCreateParams.Line
   });
 };
 
-export { createCheckoutSession ,stripeWebhookHandler};
-// here the log is done to show how the event is doen firs tthe user checkouts with the stripe then he goes for payment page and it is gone to backend and details are saved so the stripe will giv webhokk and hence the person can edit h
-// we impleemneted the cli version of stripe in our system by runningg concurrently with the nodemon 
+export { createCheckoutSession, stripeWebhookHandler };
+// placedto paid mate u have to do it ok 14:18
