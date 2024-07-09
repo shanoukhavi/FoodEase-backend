@@ -109,3 +109,5 @@ const createSession = async (lineItems: Stripe.Checkout.SessionCreateParams.Line
 };
 
 export { createCheckoutSession ,stripeWebhookHandler};
+// here the log is done to show how the event is doen firs tthe user checkouts with the stripe then he goes for payment page and it is gone to backend and details are saved so the stripe will giv webhokk and hence the person can edit h
+// we impleemneted the cli version of stripe in our system by runningg concurrently with the nodemon 
