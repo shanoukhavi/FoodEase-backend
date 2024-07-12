@@ -24,26 +24,35 @@ type CheckoutSessionRequest = {
 
 const stripeWebhookHandler = async (req: Request, res: Response) => {
   let event;
+  const sig = req.headers["stripe-signature"];
+
+  if (!sig) {
+    console.error("Missing Stripe signature header");
+    return res.status(400).send("Missing Stripe signature header");
+  }
 
   try {
-    const sig = req.headers["stripe-signature"];
     event = STRIPE.webhooks.constructEvent(req.body, sig as string, STRIPE_ENDPOINT_SECRET);
   } catch (error: any) {
-    console.log(`Webhook error: ${error.message}`);
+    console.error(`Webhook error: ${error.message}`);
     return res.status(400).send(`Webhook error: ${error.message}`);
   }
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-    const order = await Order.findById(session.metadata?.orderId);
+    try {
+      const order = await Order.findById(session.metadata?.orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
 
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
+      order.totalAmount = session.amount_total;
+      order.status = "paid";
+      await order.save();
+    } catch (err:any) {
+      console.error(`Error processing order: ${err.message}`);
+      return res.status(500).send(`Error processing order: ${err.message}`);
     }
-
-    order.totalAmount = session.amount_total;
-    order.status = "paid";
-    await order.save();
   }
 
   res.status(200).send();
@@ -126,4 +135,3 @@ const createSession = async (lineItems: Stripe.Checkout.SessionCreateParams.Line
 };
 
 export { createCheckoutSession, stripeWebhookHandler };
-// placedto paid mate u have to do it ok 14:18

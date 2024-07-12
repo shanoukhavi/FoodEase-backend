@@ -20,7 +20,7 @@ cloudinary.config({
 const app = express();
 
 app.use(cors());
-app.use("/api/order/checkout/webhook", express.raw({ type: "application/json" }));
+app.use("/api/order/checkout/webhook", express.raw({ type: "application/json" })); // Handle raw request bodies for Stripe webhooks
 app.use(express.json());
 
 app.get("/health", async (req: Request, res: Response) => {
@@ -35,4 +35,3 @@ app.use("/api/order", orderRoute);
 app.listen(7000, () => {
   console.log("Server is running on port 7000");
 });
-// stoped at 1418 mate 
