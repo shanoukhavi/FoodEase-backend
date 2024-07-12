@@ -6,6 +6,17 @@ import Order from "../models/order";
 const STRIPE = new Stripe(process.env.STRIPE_API_KEY as string);
 const FRONTEND_URL = process.env.FRONTEND_URL as string;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET as string;
+const getMyOrder=async(req:Request, res:Response)=>{
+  try{
+const orders=await Order.find({user:req.userId}).populate("restaurant").populate("user");
+res.json(orders);
+//FIND ALL THE IDS WITH CURRENT ID IF U HAVE
+  }catch(error){
+    console.log(error);
+    res.status(500).json({message:"Error getting order"});
+    
+  }
+}
 
 type CheckoutSessionRequest = {
   cartItems: {
@@ -140,4 +151,4 @@ const createSession = async (lineItems: Stripe.Checkout.SessionCreateParams.Line
   });
 };
 
-export { createCheckoutSession, stripeWebhookHandler };
+export { createCheckoutSession, stripeWebhookHandler,getMyOrder };
