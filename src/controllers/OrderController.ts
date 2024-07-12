@@ -5,7 +5,7 @@ import Order from "../models/order";
 
 const STRIPE = new Stripe(process.env.STRIPE_API_KEY as string);
 const FRONTEND_URL = process.env.FRONTEND_URL as string;
-const STRIPE_ENDPOINT_SECRET = process.env.STRIPE_WEB_ENDPOINT_SECRET as string;
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET as string;
 
 type CheckoutSessionRequest = {
   cartItems: {
@@ -31,12 +31,17 @@ const stripeWebhookHandler = async (req: Request, res: Response) => {
     return res.status(400).send("Missing Stripe signature header");
   }
 
+  console.log("Received Stripe signature:", sig);
+  console.log("Request body:", req.body);
+
   try {
-    event = STRIPE.webhooks.constructEvent(req.body, sig as string, STRIPE_ENDPOINT_SECRET);
+    event = STRIPE.webhooks.constructEvent(req.body, sig as string, STRIPE_WEBHOOK_SECRET);
   } catch (error: any) {
     console.error(`Webhook error: ${error.message}`);
     return res.status(400).send(`Webhook error: ${error.message}`);
   }
+
+  console.log("Received Stripe event:", event);
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
@@ -49,6 +54,7 @@ const stripeWebhookHandler = async (req: Request, res: Response) => {
       order.totalAmount = session.amount_total;
       order.status = "paid";
       await order.save();
+      console.log("Order updated to paid:", order);
     } catch (err:any) {
       console.error(`Error processing order: ${err.message}`);
       return res.status(500).send(`Error processing order: ${err.message}`);

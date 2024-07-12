@@ -21,7 +21,7 @@ const app = express();
 
 app.use(cors());
 app.use("/api/order/checkout/webhook", express.raw({ type: "application/json" })); // Handle raw request bodies for Stripe webhooks
-app.use(express.json());
+app.use(express.json()); // Use JSON middleware for other routes
 
 app.get("/health", async (req: Request, res: Response) => {
   res.send({ message: "Health ok!" });
